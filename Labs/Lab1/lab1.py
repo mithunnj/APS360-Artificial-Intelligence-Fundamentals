@@ -125,3 +125,20 @@ output = matrix_multiplication(matrix, vector)
 # Test cases
 assert(output.shape == (3,)) # Output should be 3x1
 assert(output.size == 3) # Output should be a single column with 3 rows
+
+## Part 3
+
+import matplotlib.pyplot as plt
+
+img = plt.imread("https://drive.google.com/uc?export=view&id=1oaLVR2hr1_qzpKQ47i9rVUIklwbDcews")
+
+# part c
+img_add = img + 0.25 # Add constant to all the elements
+img_add = np.clip(img_add, 0, 1) # Clip all the elements
+
+# part d
+img_cropped = img_add[:151, 65:131, :3] # Crop and discard the alpha channel
+#plt.imshow(img_cropped)
+#plt.show()
+
+## Part 4
