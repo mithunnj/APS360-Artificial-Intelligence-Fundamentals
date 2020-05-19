@@ -141,4 +141,70 @@ img_cropped = img_add[:151, 65:131, :3] # Crop and discard the alpha channel
 #plt.imshow(img_cropped)
 #plt.show()
 
-## Part 4
+## Part 5
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torchvision import datasets, transforms
+import matplotlib.pyplot as plt # for plotting
+import torch.optim as optim
+
+torch.manual_seed(1) # set the random seed
+
+# define a 2-layer artificial neural network
+class Pigeon(nn.Module):
+    def __init__(self):
+        super(Pigeon, self).__init__()
+        self.layer1 = nn.Linear(28 * 28, 30)
+        self.layer2 = nn.Linear(30, 1)
+    def forward(self, img):
+        flattened = img.view(-1, 28 * 28)
+        activation1 = self.layer1(flattened)
+        activation1 = F.relu(activation1)
+        activation2 = self.layer2(activation1)
+        return activation2
+
+pigeon = Pigeon()
+
+# load the data
+mnist_data = datasets.MNIST('data', train=True, download=True)
+mnist_data = list(mnist_data)
+mnist_train = mnist_data[:1000]
+mnist_val   = mnist_data[1000:2000]
+img_to_tensor = transforms.ToTensor()
+      
+    
+# simplified training code to train `pigeon` on the "small digit recognition" task
+criterion = nn.BCEWithLogitsLoss()
+optimizer = optim.SGD(pigeon.parameters(), lr=0.005, momentum=0.9)
+
+for (image, label) in mnist_train:
+    # actual ground truth: is the digit less than 3?
+    actual = torch.tensor(label < 3).reshape([1,1]).type(torch.FloatTensor)
+    # pigeon prediction
+    out = pigeon(img_to_tensor(image)) # step 1-2
+    # update the parameters based on the loss
+    loss = criterion(out, actual)      # step 3
+    loss.backward()                    # step 4 (compute the updates for each parameter)
+    optimizer.step()                   # step 4 (make the updates for each parameter)
+    optimizer.zero_grad()              # a clean up step for PyTorch
+
+# computing the error and accuracy on the training set
+error = 0
+for (image, label) in mnist_train:
+    prob = torch.sigmoid(pigeon(img_to_tensor(image)))
+    if (prob < 0.5 and label < 3) or (prob >= 0.5 and label >= 3):
+        error += 1
+print("Training Error Rate:", error/len(mnist_train))
+print("Training Accuracy:", 1 - error/len(mnist_train))
+
+
+# computing the error and accuracy on a test set
+error = 0
+for (image, label) in mnist_val:
+    prob = torch.sigmoid(pigeon(img_to_tensor(image)))
+    if (prob < 0.5 and label < 3) or (prob >= 0.5 and label >= 3):
+        error += 1
+print("Test Error Rate:", error/len(mnist_val))
+print("Test Accuracy:", 1 - error/len(mnist_val))
