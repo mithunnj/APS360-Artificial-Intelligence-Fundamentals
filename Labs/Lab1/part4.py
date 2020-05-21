@@ -180,54 +180,30 @@ plt.show()
 '''
 
 '''
-#NOTE: Uncomment code block to see results of batch size changes.
+#NOTE: Uncomment code block to see results of epochs.
+epochs, epoch_train, epoch_val = list(), list(), list()
 
-def create_sublist(l, increment):
-    #param: l <list> : This is the list of training data
-    #param: increment <int> : This is a valid factor of the length of the list to create a subset of.
-    #return: result <list> : List contains sublists of the data split into specific batch sizes.
-    increment_list = np.arange(0, len(l), increment)
-    result = list()
-    prev_i = 0
+for epoch in range(0,10):
+    epochs.append(epoch) # Keep a log of the epochs
 
-    for i in increment_list:
-        result.append(l[prev_i:i])
-        prev_i = i
-
-    return result
-    
-factors = [1,2,4,5,8,10,20,25,40,50,100,125,200,250,500,1000] # Factors of 1000
-
-batch_train_accur, batch_test_accur = list(), list()
-
-for factor in factors:
-    for train_data in create_sublist(mnist_train, factor): # Create a sublist of the training data based on the factors - used to determing batch size
-
-        count = 1 # Keep track of the number of iterations 
-
-        for (image, label) in mnist_train:
-            if count == len(mnist_train):
-                # actual ground truth: is the digit less than 3?
-                actual = torch.tensor(label < 3).reshape([1,1]).type(torch.FloatTensor)
-                # pigeon prediction
-                out = pigeon(img_to_tensor(image)) # step 1-2
-                # update the parameters based on the loss
-                loss = criterion(out, actual)      # step 3
-                loss.backward()                    # step 4 (compute the updates for each parameter)
-                optimizer.step()                   # step 4 (make the updates for each parameter)
-                optimizer.zero_grad()              # a clean up step for PyTorch
-
-                break
-            else:
-                count += 1
+    for (image, label) in mnist_train:
+        # actual ground truth: is the digit less than 3?
+        actual = torch.tensor(label < 3).reshape([1,1]).type(torch.FloatTensor)
+        # pigeon prediction
+        out = pigeon(img_to_tensor(image)) # step 1-2
+        # update the parameters based on the loss
+        loss = criterion(out, actual)      # step 3
+        loss.backward()                    # step 4 (compute the updates for each parameter)
+        optimizer.step()                   # step 4 (make the updates for each parameter)
+        optimizer.zero_grad()              # a clean up step for PyTorch
 
     # computing the error and accuracy on the training set
     error = 0
     for (image, label) in mnist_train:
-        prob = torch.sigmoid(pigeon(img_to_tensor(image))) 
+        prob = torch.sigmoid(pigeon(img_to_tensor(image)))
         if (prob < 0.5 and label < 3) or (prob >= 0.5 and label >= 3):
             error += 1
-    batch_train_accur.append(1 - error/len(mnist_train))
+    epoch_train.append(1 - error/len(mnist_train))
 
     # computing the error and accuracy on a test set
     error = 0
@@ -235,21 +211,14 @@ for factor in factors:
         prob = torch.sigmoid(pigeon(img_to_tensor(image)))
         if (prob < 0.5 and label < 3) or (prob >= 0.5 and label >= 3):
             error += 1
-    batch_test_accur.append((1 - error/len(mnist_val)))
+    epoch_val.append(1 - error/len(mnist_val))
 
-# Plot the results of batch rate
+plt.plot(epochs, epoch_train, "-b", label="Training data accuracy")
+plt.plot(epochs, epoch_val, "-r", label="Testing data accuracy")
+plt.legend(loc="lower right")
+plt.xlabel("Epochs")
+plt.ylabel("Prediction accuracy")
 
-# Plot the results of learning rate
-
-print(batch_test_accur)
-print(batch_train_accur)
-
-fig=plt.figure()
-ax=fig.add_axes([0,0,1,1])
-ax.scatter(factors, batch_test_accur, color='r')
-ax.scatter(factors, batch_train_accur, color='b')
-ax.set_xlabel('Batch divisions')
-ax.set_ylabel('Prediction accuracy')
 plt.show()
 '''
 
